@@ -11,7 +11,7 @@ const actions = [
   { name: "Generate Reports", to: "/reports", icon: <FaFileAlt size={16} /> },
 ];
 
-const Desc = ({ stats, setStats }) => {
+const Desc = () => {
   const { matchResults } = useContext(MatchResultsContext);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -53,29 +53,10 @@ const Desc = ({ stats, setStats }) => {
   }, [matchResults]);
 
   const handleRunMatcher = () => {
-    setIsProcessing(true);
-
     toast("Matcher is running... updating internship matches.", {
       icon: "🚀",
       duration: 5000,
     });
-
-    const runStart = new Date();
-    setElapsedText("0 secs ago");
-
-    // Simulate matcher process
-    setTimeout(() => {
-      const matchedUpdate = stats.matched + 3;
-      const notMatchedUpdate = Math.max(stats.notMatched - 3, 0);
-      setStats({ ...stats, matched: matchedUpdate, notMatched: notMatchedUpdate });
-
-      toast.success(
-        `Matcher finished! Matched: ${matchedUpdate}, Not Matched: ${notMatchedUpdate}`,
-        { duration: 3000 }
-      );
-
-      setIsProcessing(false);
-    }, 5000);
   };
 
   return (

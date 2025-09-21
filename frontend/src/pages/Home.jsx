@@ -3,24 +3,17 @@ import ChartContainer from "../components/ChartContainer";
 import LowerSection from "../components/LowerSection";
 import Desc from "../components/Desc";
 
-const Home = ({ stats, setStats, lastModelTime, setLastModelTime }) => {
+const Home = () => {
   return (
     <div>
       {/* Pass stats and setters to Desc */}
       <Desc
-        stats={stats}
-        setStats={setStats}
-        lastModelTime={lastModelTime}
-        setLastModelTime={setLastModelTime}
       />
 
       {/* Pass stats to ChartContainer */}
-      <ChartContainer {...stats} />
+      <ChartContainer />
 
-      <LowerSection stats={stats}
-        setStats={setStats}
-        lastModelTime={lastModelTime}
-        setLastModelTime={setLastModelTime}/>
+      <LowerSection />
     </div>
   );
 };
