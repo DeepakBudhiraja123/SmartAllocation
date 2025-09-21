@@ -4,7 +4,6 @@ import Internship from "../models/Internship.js";
 export const createInternship = async (req, res) => {
   try {
     const {
-      internship_id,
       company_name,
       role_title,
       location,
@@ -24,7 +23,6 @@ export const createInternship = async (req, res) => {
 
     // Check mandatory fields
     if (
-      !internship_id ||
       !company_name ||
       !role_title ||
       !location ||
@@ -66,7 +64,6 @@ export const createInternship = async (req, res) => {
 
     // Create internship document
     const newInternship = new Internship({
-      internship_id,
       company_name,
       role_title,
       location,
@@ -119,4 +116,3 @@ export const getInternships = async (req, res) => {
     });
   }
 };
-s

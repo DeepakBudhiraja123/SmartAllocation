@@ -5,7 +5,6 @@ import Student from "../models/student.js";
 export const addStudent = async (req, res) => {
   try {
     const {
-      student_id,
       full_name,
       location,
       pin_code,
@@ -24,7 +23,6 @@ export const addStudent = async (req, res) => {
 
     // Manual required field checks
     if (
-      !student_id ||
       !full_name ||
       !location ||
       !pin_code ||
@@ -51,7 +49,6 @@ export const addStudent = async (req, res) => {
 
     // Create a new student
     const newStudent = new Student({
-      student_id,
       full_name,
       location,
       pin_code,
