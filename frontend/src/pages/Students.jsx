@@ -1,8 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { StudentsContext } from "../../context/studentsContext"; // adjust path
 
-const Students = ({ students , lastModelTime, setLastModelTime}) => {
-  setLastModelTime("2 mins ago")
+const Students = () => {
+  const { students, fetchStudents } = useContext(StudentsContext);
+  // console.log(students);
+  
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
@@ -92,7 +99,7 @@ const Students = ({ students , lastModelTime, setLastModelTime}) => {
             >
               <option value="location">Location</option>
               <option value="cgpa">CGPA</option>
-              <option value="fullName">Name</option>
+              <option value="full_name">Name</option>
             </select>
 
             <select
@@ -149,7 +156,7 @@ const Students = ({ students , lastModelTime, setLastModelTime}) => {
                       idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                     }`}
                   >
-                    <td className="border p-3 font-medium">{student.fullName}</td>
+                    <td className="border p-3 font-medium">{student.full_name}</td>
                     <td className="border p-3">{student.location}</td>
                     <td className="border p-3">{student.cgpa}</td>
                   </motion.tr>

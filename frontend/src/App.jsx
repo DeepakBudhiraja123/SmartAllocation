@@ -8,7 +8,7 @@ import { userDummyData } from './assets/assets.js';
 import InternshipsList from './pages/InternshipsList.jsx';
 import InternshipDetails from './pages/InternshipDetails.jsx';
 import AddInternshipForm from './pages/AddInternship.jsx';
-
+import { Toaster } from "react-hot-toast";
 const App = () => {
   // Stats state
   const [stats, setStats] = useState({
@@ -31,6 +31,7 @@ const App = () => {
 
   return (
     <div>
+      <Toaster/>
       <Header />
       <NotificationsBar notifications={notifications} />
       

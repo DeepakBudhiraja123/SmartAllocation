@@ -19,6 +19,7 @@ export const createInternship = async (req, res) => {
       past_participation_preference,
       duration_weeks,
       stipend,
+      logo, // <-- added
     } = req.body;
 
     // Check mandatory fields
@@ -35,16 +36,7 @@ export const createInternship = async (req, res) => {
       return res.status(400).json({
         success: false,
         message:
-          "Missing required fields: internship_id, company_name, role_title, location, pin_code, min_cgpa, slots, duration_weeks, stipend are mandatory",
-      });
-    }
-
-    // Check if internship_id already exists
-    const existing = await Internship.findOne({ internship_id });
-    if (existing) {
-      return res.status(400).json({
-        success: false,
-        message: "An internship with this internship_id already exists",
+          "Missing required fields: company_name, role_title, location, pin_code, min_cgpa, slots, duration_weeks, stipend are mandatory",
       });
     }
 
@@ -79,8 +71,8 @@ export const createInternship = async (req, res) => {
       past_participation_preference: past_participation_preference || false,
       duration_weeks,
       stipend,
+      logo: logo || "", // <-- store logo URL
     });
-
     await newInternship.save();
 
     res.status(201).json({
@@ -102,7 +94,6 @@ export const createInternship = async (req, res) => {
 export const getInternships = async (req, res) => {
   try {
     const internships = await Internship.find().sort({ createdAt: -1 }); // newest first
-
     res.status(200).json({
       success: true,
       data: internships,

@@ -5,6 +5,7 @@ import { connectDB } from "./lib/db.js";
 import internshipRouter from "./routes/internshipRoute.js";
 import studentRouter from "./routes/studentRoute.js";
 import notificationRouter from "./routes/notificationRoute.js";
+import matchResultRouter from "./routes/matchResultRoute.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ await connectDB();
 app.use("/api/internships", internshipRouter);
 app.use("/api/students", studentRouter);
 app.use("/api/notifications", notificationRouter);
+app.use("/api/matchResult", matchResultRouter);
 
 app.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);

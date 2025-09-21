@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Info } from "lucide-react";
 import { FaPlus, FaBell, FaFileAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast, Toaster } from "react-hot-toast";
 
 const actions = [
   { name: "Add Internship", to: "/addInternship", icon: <FaPlus size={16} /> },
@@ -11,39 +10,60 @@ const actions = [
   { name: "Generate Reports", to: "/reports", icon: <FaFileAlt size={16} /> },
 ];
 
-const Desc = ({ stats, setStats, lastModelTime, setLastModelTime }) => {
+const Desc = ({ stats, setStats }) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [lastRunTime, setLastRunTime] = useState(null);
+  const [elapsedText, setElapsedText] = useState("Never");
+
+  // Update elapsed time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (lastRunTime) {
+        const now = new Date();
+        const diffMs = now - lastRunTime;
+        const hours = Math.floor(diffMs / 3600000);
+        const mins = Math.floor((diffMs % 3600000) / 60000);
+        setElapsedText(
+          `${hours > 0 ? hours + " hrs " : ""}${mins} mins ago`
+        );
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [lastRunTime]);
 
   const handleRunMatcher = () => {
     setIsProcessing(true);
 
-    // Update last run time immediately
-    setLastModelTime("0 mins ago");
+    const runStart = new Date();
+    setLastRunTime(runStart);
+    setElapsedText("0 mins ago");
 
-    // Show toast for running model
-    toast.info(
-      "Matcher is running... updating internship matches. Please wait for few seconds.",
-      { position: "top-right", autoClose: 5000 }
-    );
+    toast("Matcher is running... updating internship matches.", {
+      icon: "🚀",
+      duration: 5000,
+    });
 
-    // After toast duration (5s), update stats
+    // Simulate matcher process
     setTimeout(() => {
-      setStats({
-        ...stats,
-        matched: stats.matched + 3,
-        notMatched: Math.max(stats.notMatched - 3, 0),
-      });
-      setIsProcessing(false);
+      const matchedUpdate = stats.matched + 3;
+      const notMatchedUpdate = Math.max(stats.notMatched - 3, 0);
+      setStats({ ...stats, matched: matchedUpdate, notMatched: notMatchedUpdate });
+
       toast.success(
-        `Matcher finished! Updated matched: ${stats.matched + 3}, not matched: ${Math.max(stats.notMatched - 3, 0)}`,
-        { position: "top-right", autoClose: 3000 }
+        `Matcher finished! Matched: ${matchedUpdate}, Not Matched: ${notMatchedUpdate}`,
+        { duration: 3000 }
       );
+
+      setIsProcessing(false);
     }, 5000);
   };
 
   return (
     <>
+      <Toaster position="top-right" />
+
       <div
         className={`w-[95vw] bg-white shadow-md rounded-2xl p-6 mx-8 flex items-start justify-between gap-6 ${
           isProcessing ? "pointer-events-none opacity-70" : ""
@@ -98,19 +118,16 @@ const Desc = ({ stats, setStats, lastModelTime, setLastModelTime }) => {
               />
               {showTooltip && (
                 <div className="absolute -top-20 right-0 w-64 p-3 bg-white text-gray-800 text-xs rounded shadow-lg z-10">
-                  Model runs on internships or students updates. You may also trigger it by pressing this button.
+                  Model runs on internships or students updates. You may also trigger it manually by pressing this button.
                 </div>
               )}
             </div>
           </div>
 
           {/* Last Ran Text */}
-          <p className="text-gray-500 text-xs mt-1">Last ran: {lastModelTime}</p>
+          <p className="text-gray-500 text-xs mt-1">Last ran: {elapsedText}</p>
         </div>
       </div>
-
-      {/* Toast Container */}
-      <ToastContainer />
     </>
   );
 };
