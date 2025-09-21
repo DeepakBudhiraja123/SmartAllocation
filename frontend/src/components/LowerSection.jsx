@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useMemo } from "react";
 import { Doughnut, Bar, Line, Pie, PolarArea } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -14,6 +14,10 @@ import {
 } from "chart.js";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
+import { StudentsContext } from "../../context/studentsContext";
+import { MatchResultsContext } from "../../context/matchResultContext";
+import { InternshipContext } from "../../context/internshipsContext";
+
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -26,36 +30,104 @@ ChartJS.register(
   RadialLinearScale
 );
 
-const LowerSection = ({ stats, lastModelTime }) => {
+const LowerSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const { students } = useContext(StudentsContext);
+  const { matchResults } = useContext(MatchResultsContext);
+  const { internships } = useContext(InternshipContext);
+
+  // Calculate matched students, last run time, top internship & top department
+  const { matchedCount, lastModelTime, topInternship, topDepartment, internshipMatches, departmentCounts } = useMemo(() => {
+    const matchedStudentIds = new Set();
+    let lastRunTime = "N/A";
+
+    const internshipMatchesTemp = {}; // internship_id -> matched count
+    const departmentCountsTemp = {}; // stream -> matched count
+
+    matchResults.forEach((result) => {
+      if (Array.isArray(result.candidates)) {
+        result.candidates.forEach((c) => {
+          if (c.student_id) {
+            matchedStudentIds.add(c.student_id);
+
+            // Count department matches
+            const student = students.find((s) => s._id === c.student_id);
+            if (student?.stream) {
+              departmentCountsTemp[student.stream] = (departmentCountsTemp[student.stream] || 0) + 1;
+            }
+
+            // Count internship matches
+            internshipMatchesTemp[result.internship_id] = (internshipMatchesTemp[result.internship_id] || 0) + 1;
+          }
+        });
+      }
+
+      // Track last run
+      if (result?.run_id) lastRunTime = new Date(result.run_id);
+    });
+
+    // Top internship based on matched candidates
+    let topInternshipObj = null;
+    if (internships.length > 0) {
+      topInternshipObj = internships.reduce((prev, curr) => {
+        const prevCount = internshipMatchesTemp[prev._id] || 0;
+        const currCount = internshipMatchesTemp[curr._id] || 0;
+        return currCount > prevCount ? curr : prev;
+      }, internships[0]);
+      topInternshipObj.matchedCount = internshipMatchesTemp[topInternshipObj._id] || 0;
+    }
+
+    // Top department
+    const topDept = Object.entries(departmentCountsTemp).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
+
+    return {
+      matchedCount: matchedStudentIds.size,
+      lastModelTime: lastRunTime !== "N/A" ? lastRunTime.toLocaleString() : "N/A",
+      topInternship: topInternshipObj,
+      topDepartment: topDept,
+      internshipMatches: internshipMatchesTemp,
+      departmentCounts: departmentCountsTemp,
+    };
+  }, [matchResults, internships, students]);
 
   const insights = [
     {
       title: "Students Matched",
-      description: `${stats.matched} students matched with internships.`,
+      description: `${matchedCount} students matched with internships.`,
       chartType: "Doughnut",
       chartData: {
         labels: ["Matched", "Remaining"],
         datasets: [
-          { data: [stats.matched, stats.students - stats.matched], backgroundColor: ["#2563eb", "#93c5fd"] },
+          {
+            data: [matchedCount, students.length - matchedCount],
+            backgroundColor: ["#2563eb", "#93c5fd"],
+          },
         ],
       },
       cardColor: "bg-blue-50",
-      depthDescription: `The last internship matching run successfully placed ${stats.matched} students. The model continues to optimize placements based on student skills and internship requirements.`,
+      depthDescription: `The last internship matching run successfully placed ${matchedCount} students. The model continues to optimize placements based on student skills and internship requirements.`,
     },
     {
       title: "Top Internship",
-      description: "The internship with the highest number of matches had 40 students.",
+      description: topInternship
+        ? `Top role: ${topInternship.role_title} at ${topInternship.company_name} (${topInternship.matchedCount} students matched)`
+        : "No internships yet",
       chartType: "Bar",
       chartData: {
-        labels: ["Software Engineer", "Data Scientist", "Hardware Related", "Other"],
+        labels: internships.map((i) => i.role_title || "Unknown"),
         datasets: [
-          { label: "Students", data: [25, 20, 15, 15], backgroundColor: ["#059669", "#6ee7b7", "#10b981", "#34d399"] },
+          {
+            label: "Students Matched",
+            data: internships.map((i) => internshipMatches[i._id] || 0),
+            backgroundColor: ["#059669", "#6ee7b7", "#10b981", "#34d399"],
+          },
         ],
       },
       cardColor: "bg-green-50",
-      depthDescription:
-        "The Software Engineer internship attracted 25 students, making it the top choice in the last round. This helps in planning future internship opportunities accordingly.",
+      depthDescription: topInternship
+        ? `The internship "${topInternship.role_title}" at "${topInternship.company_name}" attracted the most students, making it the leading choice in the last run.`
+        : "No internship data available to determine top role.",
     },
     {
       title: "Average Runtime",
@@ -63,7 +135,16 @@ const LowerSection = ({ stats, lastModelTime }) => {
       chartType: "Line",
       chartData: {
         labels: ["Run1", "Run2", "Run3", "Run4", "Run5"],
-        datasets: [{ label: "Seconds", data: [3.2, 3.5, 3.4, 3.6, 3.3], borderColor: "#f59e0b", backgroundColor: "#fef3c7", fill: false, tension: 0.3 }],
+        datasets: [
+          {
+            label: "Seconds",
+            data: [3.2, 3.5, 3.4, 3.6, 3.3],
+            borderColor: "#f59e0b",
+            backgroundColor: "#fef3c7",
+            fill: false,
+            tension: 0.3,
+          },
+        ],
       },
       cardColor: "bg-amber-50",
       depthDescription:
@@ -75,23 +156,34 @@ const LowerSection = ({ stats, lastModelTime }) => {
       chartType: "Pie",
       chartData: {
         labels: ["Elapsed", "Remaining"],
-        datasets: [{ data: [lastModelTime.includes("hrs") ? parseInt(lastModelTime) : 0, 24 - (lastModelTime.includes("hrs") ? parseInt(lastModelTime) : 0)], backgroundColor: ["#ef4444", "#fca5a5"] }],
+        datasets: [
+          {
+            data: [
+              lastModelTime !== "N/A" ? 1 : 0,
+              lastModelTime !== "N/A" ? 0 : 1,
+            ],
+            backgroundColor: ["#ef4444", "#fca5a5"],
+          },
+        ],
       },
       cardColor: "bg-red-50",
-      depthDescription:
-        `The last execution of the internship matching algorithm was completed ${lastModelTime}. Frequent runs ensure data stays up-to-date.`,
+      depthDescription: `The last execution of the internship matching algorithm was completed ${lastModelTime}. Frequent runs ensure data stays up-to-date.`,
     },
     {
       title: "Top Department",
-      description: "Top department with highest matches: Computer Science.",
+      description: `Top department with highest matches: ${topDepartment}`,
       chartType: "PolarArea",
       chartData: {
-        labels: ["CS", "EE", "Data Science", "Other"],
-        datasets: [{ data: [25, 20, 10, 5], backgroundColor: ["#7c3aed", "#c4b5fd", "#a78bfa", "#d8b4fe"] }],
+        labels: Object.keys(departmentCounts),
+        datasets: [
+          {
+            data: Object.values(departmentCounts),
+            backgroundColor: ["#7c3aed", "#c4b5fd", "#a78bfa", "#d8b4fe", "#f472b6"],
+          },
+        ],
       },
       cardColor: "bg-purple-50",
-      depthDescription:
-        "Computer Science leads in internship matches, reflecting high student participation and strong alignment with current internship offerings.",
+      depthDescription: `The "${topDepartment}" department has the most internship matches, reflecting strong student participation and alignment with available internship roles.`,
     },
   ];
 
@@ -141,29 +233,37 @@ const LowerSection = ({ stats, lastModelTime }) => {
 
         {/* Right Column - White card with description + chart */}
         <div className="w-3/4 bg-white rounded-2xl shadow-lg p-6 flex flex-row items-center justify-between">
-          {/* Depth Description with title (left) */}
           <div className="flex-1 flex flex-col justify-center items-center px-4">
-            <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">{currentInsight.title}</h3>
-            <p className="text-gray-700 text-base text-center leading-relaxed">{currentInsight.depthDescription}</p>
+            <h3 className="text-xl font-bold text-gray-800 mb-3 text-center">
+              {currentInsight.title}
+            </h3>
+            <p className="text-gray-700 text-base text-center leading-relaxed">
+              {currentInsight.depthDescription}
+            </p>
           </div>
 
-          {/* Chart (right) */}
-          <div className="w-96 h-96 flex items-center justify-center">{renderChart(currentInsight)}</div>
+          <div className="w-96 h-96 flex items-center justify-center">
+            {renderChart(currentInsight)}
+          </div>
         </div>
       </div>
 
-      {/* Navigation Arrows below the card */}
+      {/* Navigation Arrows */}
       <div className="flex justify-center space-x-4 mt-6">
         <button
           onClick={() =>
-            setCurrentIndex((prev) => (prev - 1 + insights.length) % insights.length)
+            setCurrentIndex(
+              (prev) => (prev - 1 + insights.length) % insights.length
+            )
           }
           className="bg-gray-100 p-2 rounded-full shadow hover:bg-gray-200 transition"
         >
           <FiChevronLeft size={20} />
         </button>
         <button
-          onClick={() => setCurrentIndex((prev) => (prev + 1) % insights.length)}
+          onClick={() =>
+            setCurrentIndex((prev) => (prev + 1) % insights.length)
+          }
           className="bg-gray-100 p-2 rounded-full shadow hover:bg-gray-200 transition"
         >
           <FiChevronRight size={20} />

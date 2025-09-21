@@ -6,13 +6,16 @@ import { BrowserRouter } from "react-router-dom";
 import { StudentsProvider } from "../context/studentsContext.jsx";
 import { InternshipProvider } from "../context/internshipsContext.jsx";
 import { MatchResultsProvider } from "../context/matchResultContext.jsx";
+import { NotificationsProvider } from "../context/notificationsContext.jsx";
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <InternshipProvider>
       <StudentsProvider>
         <MatchResultsProvider>
-          <App />
+          <NotificationsProvider>
+            <App />
+          </NotificationsProvider>
         </MatchResultsProvider>
       </StudentsProvider>
     </InternshipProvider>

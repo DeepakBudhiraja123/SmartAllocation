@@ -1,9 +1,18 @@
 // NotificationsBar.jsx
-import React, { useRef } from "react";
+import React, { useContext, useRef } from "react";
+import { NotificationsContext } from "../../context/notificationsContext";
 
-const NotificationsBar = ({ notifications }) => {
-  const repeatedNotifications = [...notifications, ...notifications]; // loop smoothly
+const NotificationsBar = () => {
+  const { notifications } = useContext(NotificationsContext);
   const containerRef = useRef(null);
+
+  // Extract message text and handle empty notifications
+  const messages = notifications.length
+    ? notifications.map((n) => n.message)
+    : ["No notifications yet"];
+
+  // Duplicate array for smooth looping
+  const repeatedNotifications = [...messages, ...messages];
 
   return (
     <div className="w-full bg-gray-100 overflow-hidden h-8 flex items-center relative">
@@ -11,12 +20,9 @@ const NotificationsBar = ({ notifications }) => {
         ref={containerRef}
         className="marquee whitespace-nowrap flex items-center"
       >
-        {repeatedNotifications.map((note, idx) => (
-          <span
-            key={idx}
-            className="mx-12 text-gray-900"
-          >
-            {note}
+        {repeatedNotifications.map((msg, idx) => (
+          <span key={idx} className="mx-12 text-gray-900">
+            {msg}
           </span>
         ))}
       </div>

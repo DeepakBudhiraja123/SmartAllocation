@@ -9,6 +9,7 @@ import InternshipsList from './pages/InternshipsList.jsx';
 import InternshipDetails from './pages/InternshipDetails.jsx';
 import AddInternshipForm from './pages/AddInternship.jsx';
 import { Toaster } from "react-hot-toast";
+import NotificationsPage from './pages/NotificationsPage.jsx';
 const App = () => {
   // Stats state
   const [stats, setStats] = useState({
@@ -68,6 +69,7 @@ const App = () => {
         />
 
         <Route path="/internship/:id" element={<InternshipDetails />} />
+        <Route path='/notifications' element={<NotificationsPage/>}/>
       </Routes>
     </div>
   )

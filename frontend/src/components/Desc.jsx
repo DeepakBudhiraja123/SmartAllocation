@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { Info } from "lucide-react";
 import { FaPlus, FaBell, FaFileAlt } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { toast, Toaster } from "react-hot-toast";
+import { MatchResultsContext } from "../../context/matchResultContext"; // adjust path
 
 const actions = [
   { name: "Add Internship", to: "/addInternship", icon: <FaPlus size={16} /> },
@@ -11,39 +12,56 @@ const actions = [
 ];
 
 const Desc = ({ stats, setStats }) => {
+  const { matchResults } = useContext(MatchResultsContext);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [lastRunTime, setLastRunTime] = useState(null);
   const [elapsedText, setElapsedText] = useState("Never");
 
-  // Update elapsed time every minute
+  // Update elapsed time every second using latest run_id
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (lastRunTime) {
-        const now = new Date();
-        const diffMs = now - lastRunTime;
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        setElapsedText(
-          `${hours > 0 ? hours + " hrs " : ""}${mins} mins ago`
-        );
-      }
-    }, 60000);
+    if (!matchResults || matchResults.length === 0) {
+      setElapsedText("Never");
+      return;
+    }
 
+    const latest = [...matchResults].sort(
+      (a, b) => new Date(b.run_id) - new Date(a.run_id)
+    )[0];
+
+    const lastRunTime = new Date(latest.run_id);
+
+    const updateElapsed = () => {
+      const now = new Date();
+      const diffMs = now - lastRunTime;
+
+      const hours = Math.floor(diffMs / 3600000);
+      const mins = Math.floor((diffMs % 3600000) / 60000);
+      const secs = Math.floor((diffMs % 60000) / 1000);
+
+      setElapsedText(
+        hours > 0
+          ? `${hours} hrs ${mins} mins ago`
+          : mins > 0
+          ? `${mins} mins ${secs} secs ago`
+          : `${secs} secs ago`
+      );
+    };
+
+    updateElapsed(); // run immediately
+    const interval = setInterval(updateElapsed, 1000);
     return () => clearInterval(interval);
-  }, [lastRunTime]);
+  }, [matchResults]);
 
   const handleRunMatcher = () => {
     setIsProcessing(true);
-
-    const runStart = new Date();
-    setLastRunTime(runStart);
-    setElapsedText("0 mins ago");
 
     toast("Matcher is running... updating internship matches.", {
       icon: "🚀",
       duration: 5000,
     });
+
+    const runStart = new Date();
+    setElapsedText("0 secs ago");
 
     // Simulate matcher process
     setTimeout(() => {
@@ -117,8 +135,8 @@ const Desc = ({ stats, setStats }) => {
                 className="text-gray-400 hover:text-blue-600 transition cursor-pointer"
               />
               {showTooltip && (
-                <div className="absolute -top-20 right-0 w-64 p-3 bg-white text-gray-800 text-xs rounded shadow-lg z-10">
-                  Model runs on internships or students updates. You may also trigger it manually by pressing this button.
+                <div className="absolute -top-20 right-0 w-64 p-3 bg-white text-black text-xs rounded shadow-lg z-10">
+                  The model automatically runs when internships or students are updated. You can also trigger it manually by pressing this button.
                 </div>
               )}
             </div>
