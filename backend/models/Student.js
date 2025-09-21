@@ -1,25 +1,25 @@
 import mongoose from "mongoose";
 
-const qualificationSchema = new mongoose.Schema({
-  program: { type: String, required: true }, // e.g., BTech, MTech
-  domain: { type: String, required: true },  // e.g., CSE, ECE
-  GPA: { type: Number, required: true }
-});
-
 const studentSchema = new mongoose.Schema(
   {
-    fullName: { type: String, required: true },
+    student_id: { type: String, required: true, unique: true },
+    full_name: { type: String, required: true },
     location: { type: String, required: true },
-    pinCode: { type: String, required: true },
-    skills: { type: [String], default: [] },
-    qualifications: { type: [qualificationSchema], default: [] },
-    email: { type: String, unique: true, sparse: true }, // optional
-    password: { type: String, minLength: 6 },           // optional
-    profilePic: { type: String, default: "" }           // optional
+    pin_code: { type: String, required: true },
+    skills: { type: [String], required: true }, // array of skills
+    cgpa: { type: Number, required: true },
+    highest_degree: { type: String, required: true }, // e.g., B.Tech, M.Tech
+    stream: { type: String, required: true }, // e.g., CSE, ECE
+    past_participation: { type: Boolean, default: false },
+    positions_of_responsibility: { type: String }, // e.g., "Class Rep, Club Head"
+    preferred_locations: { type: [String] }, // multiple cities allowed
+    preferred_sectors: { type: [String] }, // multiple sectors allowed
+    rural_or_urban: { type: String, enum: ["Rural", "Urban"] },
+    social_category: { type: String }, // e.g., General, OBC, SC, ST
+    projects: { type: String } // comma-separated projects
   },
   { timestamps: true }
 );
 
 const Student = mongoose.model("Student", studentSchema);
-
 export default Student;

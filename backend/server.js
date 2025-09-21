@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB } from "./lib/db.js";
 import internshipRouter from "./routes/internshipRoute.js";
+import studentRouter from "./routes/studentRoute.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.get("/", (req, res) => {
 await connectDB();
 
 app.use("/api/internships", internshipRouter);
+app.use("/api/students", studentRouter);
 
 app.listen(PORT, () => {
   console.log(`Server started on http://localhost:${PORT}`);
